@@ -78,6 +78,7 @@ INSTRUCTIONS TO STUDENTS
 
 """
 
+
 import chess
 from chessboard import display
 import time
@@ -194,6 +195,61 @@ class State:
         For now, the function just returns 0.
         Replace with your material calculation and add improvements.
         """
+           def evaluate(self):
+        """
+        Simple evaluation function
+        Positive = good for White
+        Negative = good for Black
+        """
+
+        # 1. Handle game over
+        if self.board.is_checkmate():
+            return -1000 if self.player else 1000
+        if self.board.is_stalemate() or self.board.is_insufficient_material() or self.board.can_claim_draw():
+            return 0
+
+        score = 0
+
+        # 2. Material count (basic piece values)
+        for sq, piece in self.board.piece_map().items():
+            if piece.piece_type == chess.PAWN:
+                value = 1
+            elif piece.piece_type == chess.KNIGHT:
+                value = 3
+            elif piece.piece_type == chess.BISHOP:
+                value = 3
+            elif piece.piece_type == chess.ROOK:
+                value = 5
+            elif piece.piece_type == chess.QUEEN:
+                value = 9
+            else:
+                value = 0
+
+            if piece.color == chess.WHITE:
+                score += value
+            else:
+                score -= value
+
+        # 3. Simple center control
+        center = [chess.D4, chess.E4, chess.D5, chess.E5]
+        for sq in center:
+            piece = self.board.piece_at(sq)
+            if piece:
+                if piece.color == chess.WHITE:
+                    score += 0.5
+                else:
+                    score -= 0.5
+
+        # 4. Simple mobility (just counts moves)
+        b = self.board.copy()
+        b.turn = chess.WHITE
+        white_moves = len(list(b.legal_moves))
+        b.turn = chess.BLACK
+        black_moves = len(list(b.legal_moves))
+        score += 0.1 * (white_moves - black_moves)
+
+        return score
+
 
         # Step 1: Handle finished games
         if self.board.is_checkmate():
@@ -328,3 +384,4 @@ def play_game():
 
 if __name__ == "__main__":
     play_game()
+
